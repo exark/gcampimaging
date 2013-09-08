@@ -350,7 +350,7 @@ hold on
 for j=2:12,
     plot(x(j,:),r.responseOrdered_Traces(j,:,cellID))
     ylabel ('F/F0')
-    xlabel('Frame')
+    xlabel('Degrees')
 end
 title (cellIDstr)
 set(gca, 'XTick', [1 17 33 48 63 77 92 107 122 137 152 167]);
