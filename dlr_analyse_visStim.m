@@ -3,7 +3,7 @@
 %Data aquired using ScanImage
 %Currently requires 256x256 tiff images.  Interpolate to resize if
 %necessary.
-function [r] = dlr_analyze_visStimVer080513
+function [r] = dlr_analyse_visStim
 originaldirectory=pwd;
 
 genFigures=1;
