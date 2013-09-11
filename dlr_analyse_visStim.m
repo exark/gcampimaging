@@ -6,7 +6,7 @@
 function [r] = dlr_analyse_visStim
 originaldirectory=pwd;
 
-genFigures=1;
+genFigures=0;
 
 GCaMPch=1;
 REDch=2;
@@ -46,27 +46,23 @@ zoomFactor=header.acq.zoomFactor;
 frameRate=header.acq.frameRate;
 
 CS = zeros(numFrames,256,256);  %CS- calcium signal channel
+R = zeros(numFrames,256,256); %R- red channel
 PD = zeros(256,256,numFrames);  % photodiode channel, feedback from vis stim monitor
 
 for(i=1:numFrames)
     CS(i,:,:)=imread(f,'Index',GCaMPch+(i-1)*numChans);  %use 1+(i-1)*3 if first channel aquired is calcium signal and three channels were aquired
+    R(i,:,:)=imread(f,'Index',REDch+(i-1)*numChans); %1+(i-1)*3 is becuase three channels were aquired
     PD(:,:,i) = imread(f,'Index',PDch+(i-1)*numChans);
 end
 PDm= squeeze(mean(mean(PD)));
-
 
 CSm = squeeze(mean(CS,1));
 CSm = (CSm-min(CSm(:)))/(max(CSm(:))-min(CSm(:)));
 CSma = imadjust(CSm);
 
-R = zeros(numFrames,256,256); %R- red channel
-for(i=1:numFrames)
-    R(i,:,:)=imread(f,'Index',REDch+(i-1)*numChans); %1+(i-1)*3 is becuase three channels were aquired
-end
 Rm = squeeze(mean(R,1));
 Rm = (Rm-min(Rm(:)))/(max(Rm(:))-min(Rm(:)));
 Rma = imadjust(Rm);
-
 
 fuse=imfuse(CSma,Rma, 'falsecolor', 'colorchannels', [2,1,0]);
 
