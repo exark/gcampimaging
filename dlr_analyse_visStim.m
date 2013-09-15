@@ -6,7 +6,7 @@
 function [r] = dlr_analyse_visStim
 originaldirectory=pwd;
 
-genFigures=0;
+genFigures=1;
 
 GCaMPch=1;
 REDch=2;
@@ -64,70 +64,20 @@ Rm = squeeze(mean(R,1));
 Rm = (Rm-min(Rm(:)))/(max(Rm(:))-min(Rm(:)));
 Rma = imadjust(Rm);
 
-fuse=imfuse(CSma,Rma, 'falsecolor', 'colorchannels', [2,1,0]);
+%Generate maks from normalized calcium channel
+CSmsk = CSma(:,:)>=0.7;
 
- [~, ~,x] = cpselect_sk(fuse,CSma, 'Wait',true); %modified toolbox cpselect so outputs ALL cells, not just pairs
-%[~, ~,x] = cpselect_sk(CSma,CSma, 'Wait',true); %modified toolbox cpselect so outputs ALL cells, not just pairs
+%Use non-zero parts of mask to select spots for analysis
+[y, x] = find(CSmsk);
 
-% imcontrast(gca)  %possible to incorperate imcontrast to adjust image contrast
-Xc = round(x.basePoints);
+%x and y can now be used to find the corresponding pixel in CSma. For
+%example, to find the actual position of the 400th pixel being analyzed,
+%look at the coordinates given by x(400),y(400) in CSma.
 
-
-CSmsk = zeros(size(CSma));
-
-
-N = 9;
-if zoomFactor==4,
-    N= round(N*2.0); %zoom4
-end
-if zoomFactor==3,
-    N= 14; %zoom3
-end
-
-    for(i=1:size(Xc,1))
-        
-        ii = Xc(i,2)-N:Xc(i,2)+N;
-        jj = Xc(i,1)-N:Xc(i,1)+N;
-        %in case near edge:
-        Nii=N;
-        Njj=N;
-        while max(ii) > size(CSma,1)
-            Nii=Nii-1;
-            ii = Xc(i,2)-Nii:Xc(i,2)+Nii;
-        end
-        while max(jj) > size(CSma,2)
-            Njj=Njj-1;
-            ii = Xc(i,2)-Njj:Xc(i,2)+Njj;
-        end
-        %
-%         max(ii)
-%         max(jj)
-        CSsub = CSma(ii,jj);      
-     
-        i
-        mCS = cellseg_sk(CSsub, zoomFactor);
-        CSmsk(ii,jj) = mCS * i;
-        
-        if length(ii)<N/2 ||  length(jj)<N/2, 
-            beep;
-            disp('too close to edge, please re-do or consider eliminating cell number:')
-            disp(i)
-        end
-    end
-
-
-% now pull the signals out...
-
-ncells = size(Xc,1);
-for(i=1:ncells)
-    
-    idxCS = find(CSmsk==i); idxCS = idxCS(:);
-    for(j=1:numFrames)
-        imgCS = squeeze(CS(j,:,:));      
-        
-        %Calcium Signal, this is the primary output
-        CSsig(i,j) = mean(imgCS(idxCS));  
-        
+for (j=1:numFrames)
+    imgCS = squeeze(CS(j,:,:));
+    for (i=1:length(x))
+        CSsig(i, j) = imgCS(x(i),y(i));
     end
 end
 
@@ -152,12 +102,13 @@ imshow(r.CSimage)
 hold on
 numcells= size(r.CSsig,1);
     for i=1:numcells
-         [y,x]=find(r.mask==i); 
-         plot(x(1:6:end),y(1:6:end), '.')
-         set(gca,'YDir','reverse')
-         cellID=num2str(i);
-         text(x(1)-6,y(1), cellID,'FontSize', 16,'FontWeight','bold','Color',[1 0.694117647058824 0.392156862745098]);
-         hold on
+        newX = x(i);
+        newY = y(i);
+        plot(newX,newY, '.')
+        set(gca,'YDir','reverse')
+        cellID=num2str(i);
+        %text(newX-6,y(1), cellID,'FontSize', 16,'FontWeight','bold','Color',[1 0.694117647058824 0.392156862745098]);
+        hold on
     end
     hold off
     ylim([0 256])
@@ -278,7 +229,8 @@ if genFigures
 plotEnd= min([max(r.stimOffsets)+5], [r.numFrames]);
 xaxisFrames=1:r.numFrames;
 
-for i=1: size(r.CSsig,1)
+%for i=1: size(r.CSsig,1)
+for i=1:5
 fh=figure();
 cellname=['cell ID ' num2str(i)];
 baselineTextValue= ['Baseline: ' num2str(round(r.baseline(i)))];
@@ -335,7 +287,8 @@ set(gca,'XTickLabel', {'0', '30', '60', '90', '120', '150','180', '210', '240', 
 
 % % can comment
 
-for i=1:size(r.CSsig,1);
+for i=1:5
+%for i=1:size(r.CSsig,1);
     cellID=i;
 %cellID=1;
 cellIDstr=['cell ID ' num2str(cellID)];
