@@ -13,6 +13,9 @@ REDch=2;
 PDch=3;
 ballTRACKch=4;
 
+thresh=0.5;
+multMagnitude=4.5;
+
 
 [f,p]  = uigetfile('*.tif','Select your 3 or 4 chan file');            % generalized to 4 channels Aug3 2013    
 
@@ -65,7 +68,7 @@ Rm = (Rm-min(Rm(:)))/(max(Rm(:))-min(Rm(:)));
 Rma = imadjust(Rm);
 
 %Generate maks from normalized calcium channel
-CSmsk = CSma(:,:)>=0.7;
+CSmsk = CSma(:,:)>=thresh;
 
 %Use non-zero parts of mask to select spots for analysis
 [y, x] = find(CSmsk);
@@ -78,6 +81,26 @@ for (j=1:numFrames)
     imgCS = squeeze(CS(j,:,:));
     for (i=1:length(x))
         CSsig(i, j) = imgCS(x(i),y(i));
+    end
+end
+
+%determine if total magnitude change over the entire span of the experiment
+%is greater than multMagnitude. Excise pixels from data set that don't meet
+%this
+
+filteredX = []
+for (i=1:length(x))
+    maxValue=0;
+    minValue=0;
+    for (j=1:numFrames)
+        if CSsig(i,j) > maxValue
+            maxValue = CSsig(i,j);
+        elseif CSsig(i,j) < minValue
+            maxValue = CSsig(i,j);
+        end
+    end
+    if (maxValue/minValue) >= multMagnitude
+        filteredX = [filteredX i];
     end
 end
 
@@ -160,6 +183,7 @@ figure()
 plot(r.PDm);
 hold on
 plot(r.stimOnsets,r.PDm(r.stimOnsets), 'r*')
+plot(r.stimOffsets,r.PDm(r.stimOffsets), 'g*')
 hold off
 title StimOnsets
 
