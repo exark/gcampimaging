@@ -6,7 +6,7 @@
 function [r] = dlr_analyse_visStim
 originaldirectory=pwd;
 
-genFigures=0;
+genFigures=1;
 
 GCaMPch=1;
 REDch=2;
@@ -198,7 +198,7 @@ for i=1:numel(stimOnsets)
 end
 
 stimOffsets= frameTransitions1(2:2:numel(frameTransitions1));
-stimOffsets(end+1)= stimOnsets(end)+5;
+stimOffsets(end+1)= stimOnsets(end)+5; %invalid with 5. ignore or recalculate
 
 r.stimOnsets= stimOnsets; %same for all cells
 r.stimOffsets= stimOffsets; %same for all cells
