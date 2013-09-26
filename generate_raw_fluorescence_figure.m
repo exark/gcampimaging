@@ -13,9 +13,9 @@ plot ([image.stimOnsets image.stimOnsets], [mean(image.CSsig(i,:))*.95 mean(imag
 hold on
 plot ([image.stimOffsets image.stimOffsets], [mean(image.CSsig(i,:))*.95 mean(image.CSsig(i,:))*1.2], 'LineWidth', 1, 'Color', [0.8 0.8 0.8])
 plot ([1:plotEnd],image.CSsig(i,1:plotEnd),  'LineWidth', 2,'Color','k')
-plot ([xaxisFrames(image.stimOnsets-1)],image.CSsig(i,image.stimOnsets-1), 'image.')
-plot ([xaxisFrames(image.stimOnsets-2)],image.CSsig(i,image.stimOnsets-2), 'image.')
-plot ([xaxisFrames(image.stimOnsets)],image.CSsig(i,image.stimOnsets), 'image.')
+plot ([xaxisFrames(image.stimOnsets-1)],image.CSsig(i,image.stimOnsets-1), 'r.')
+plot ([xaxisFrames(image.stimOnsets-2)],image.CSsig(i,image.stimOnsets-2), 'r.')
+plot ([xaxisFrames(image.stimOnsets)],image.CSsig(i,image.stimOnsets), 'r.')
 hold off
 title ({'Raw Fluorescence';cellname});
 ylabel ('Arbitrary units')
