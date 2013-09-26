@@ -32,7 +32,9 @@ r.image(1).CSsig = generate_CS_signal_map(r.image(1))
 %generate figure that labels cells
 generate_labeled_figure(r.image(1));
 
-r.image(1) = calculate_data(r.image(1));
+new_image = calculate_data(r.image(1));
+
+r.image(1) = new_image;
 
 %this plots stimonsets.
 generate_onsets_figure(r.image(1));
