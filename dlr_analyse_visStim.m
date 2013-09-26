@@ -6,7 +6,7 @@
 function [r] = dlr_analyse_visStim
 originaldirectory=pwd;
 
-genFigures=0;
+genFigures=1;
 
 r.image(1) = load_image_with_visStim;
 
@@ -32,9 +32,17 @@ r.image(1).CSsig = generate_CS_signal_map(r.image(1))
 %generate figure that labels cells
 generate_labeled_figure(r.image(1));
 
-new_image = calculate_data(r.image(1));
-
-r.image(1) = new_image;
+[r.image(1).stimOnsets, ...
+r.image(1).stimOffsets, ...
+r.image(1).baseline, ...
+r.image(1).visStimParamFile, ...
+r.image(1).vsParamFilename, ...
+r.image(1).stimOrder, ...
+r.image(1).stimulusParameters, ...
+r.image(1).stimOrderIndex, ...
+r.image(1).responseOrdered_MeanAmplitude, ...
+r.image(1).responseOrdered_localBaseline, ...
+r.image(1).responseOrdered_Traces] = calculate_data(r.image(1));
 
 %this plots stimonsets.
 generate_onsets_figure(r.image(1));
@@ -49,19 +57,6 @@ generate_ordered_fluorescence_figure(r.image(1))
 
 end % if genFigures
 % % save file with promt and name suggestion
-
-mkdir('Analysis');
-cd ('Analysis');
-indexUS= strfind(f, '_');
-indexUS_last=indexUS(end);
-filenameprefix1= f(1:indexUS_last+3);
-contrastStrValue= [num2str(r.visStimParamFile.contrast*100)];
-sf = [filenameprefix1 '-' contrastStrValue];
-
-[sf,sp]= uiputfile('.mat', ['Save responses for image file: ' filenameprefix1], sf);
-save(sf,'r');
-
-cd (originaldirectory);
 
 %%%%%adding multiple image stuff%%%%
 % [f2,p2]  = uigetfile('*.tif','Select another image of the same cell');  
@@ -152,6 +147,19 @@ cd (originaldirectory);
 %     ylim([0 256])
 %     xlim([0 256])
 %%%%%%%%%%%%%
+
+mkdir('Analysis');
+cd ('Analysis');
+indexUS= strfind(r.image(1).f, '_');
+indexUS_last=indexUS(end);
+filenameprefix1= f(1:indexUS_last+3);
+contrastStrValue= [num2str(r.visStimParamFile.contrast*100)];
+sf = [filenameprefix1 '-' contrastStrValue];
+
+[sf,sp]= uiputfile('.mat', ['Save responses for image file: ' filenameprefix1], sf);
+save(sf,'r');
+
+cd (originaldirectory);
 f
 
 
