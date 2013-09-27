@@ -6,7 +6,8 @@
 function [r] = dlr_analyse_visStim
 originaldirectory=pwd;
 
-genFigures=1;
+genFigures=0;
+numTrials = 4;
 
 r.image(1) = load_image_with_visStim;
 
@@ -21,16 +22,7 @@ r.image(1).CSmsk = generate_CS_mask(r.image(1));
 % now pull the signals out...
 r.image(1).CSsig = generate_CS_signal_map(r.image(1))
 
-% % % r.filename = hgeneric(1, 1).Filename;
-% % % r.mask = CSmsk;
-% % % r.CSimage = CSma;
-% % % r.CSsig= CSsig;
-% % % r.PDm=PDm;
-% % % r.numFrames=numFrames;
-% % % r.x=x; %points, output from cpselect
-
 %generate figure that labels cells
-generate_labeled_figure(r.image(1));
 
 [r.image(1).stimOnsets, ...
 r.image(1).stimOffsets, ...
@@ -44,123 +36,79 @@ r.image(1).responseOrdered_MeanAmplitude, ...
 r.image(1).responseOrdered_localBaseline, ...
 r.image(1).responseOrdered_Traces] = calculate_data(r.image(1));
 
-%this plots stimonsets.
-generate_onsets_figure(r.image(1));
-
 % %plot raw fluorescence traces for each cell:
 
 if genFigures
-
-generate_raw_fluorescence_figure(r.image(1))
-
-generate_ordered_fluorescence_figure(r.image(1))
-
+    generate_labeled_figure(r.image(1));
+    generate_onsets_figure(r.image(1));
+    generate_raw_fluorescence_figure(r.image(1))
+    generate_ordered_fluorescence_figure(r.image(1))
 end % if genFigures
-% % save file with promt and name suggestion
 
-%%%%%adding multiple image stuff%%%%
-% [f2,p2]  = uigetfile('*.tif','Select another image of the same cell');  
-% dir('*.mat');
-% DirInfoImage=dir(f);
-% DirInfoVSF=dir('*.mat');
-% 
-% for i=1:size(DirInfoVSF,1)
-%     ad(i)=abs(diff([DirInfoImage.datenum DirInfoVSF(i).datenum]));
+% multiple trail analysis starts here
+
+for i=2:numTrials
+    new_image = load_image_with_visStim;
+    new_image.basePoints = r.image(1).basePoints
+    % generate mask from image
+    new_image.CSmsk = generate_CS_mask(new_image);
+
+    % now pull the signals out...
+    new_image.CSsig = generate_CS_signal_map(new_image)
+
+    %generate figure that labels cells
+    generate_labeled_figure(new_image);
+
+    [new_image.stimOnsets, ...
+    new_image.stimOffsets, ...
+    new_image.baseline, ...
+    new_image.visStimParamFile, ...
+    new_image.vsParamFilename, ...
+    new_image.stimOrder, ...
+    new_image.stimulusParameters, ...
+    new_image.stimOrderIndex, ...
+    new_image.responseOrdered_MeanAmplitude, ...
+    new_image.responseOrdered_localBaseline, ...
+    new_image.responseOrdered_Traces] = calculate_data(new_image);
+
+    %this plots stimonsets.
+    generate_onsets_figure(new_image);
+	
+	r.image(i) = new_image;
+
+    % %plot raw fluorescence traces for each cell:
+
+    if genFigures
+        generate_raw_fluorescence_figure(r.image(i))
+        generate_ordered_fluorescence_figure(r.image(i))
+    end % if genFigures
+end
+
+% generate mean response from all trials
+concatted_ordered_responses = cat(1,r.image(1).responseOrdered_MeanAmplitude, ...
+    r.image(2).responseOrdered_MeanAmplitude, ...
+    r.image(3).responseOrdered_MeanAmplitude, ...
+    r.image(4).responseOrdered_MeanAmplitude)
+r.meanResponses = mean(concatted_ordered_responses)
+
+% if genFigures
+%     meanResponseAcrossTrials = 
+%     figure()
+%     polar(0:((2*pi)/12):2*pi,responseOrdered,'--r') 
 % end
-% [~,indexMin]= min(ad); 
-% mfSuggest=DirInfoVSF(indexMin).name;
-% [mf2,mp2]  = uigetfile(mfSuggest,'Select your .mat vis stim file');
-% 
-% %read in header info of image file
-% hgeneric=imfinfo([p2 f2]);
-% header=hgeneric(1).ImageDescription;
-% header=parseHeader(header);
-% %ScanImage specifc:
-% numFrames=header.acq.numberOfFrames;
-% pxPline=header.acq.pixelsPerLine;
-% linePfram=header.acq.linesPerFrame;
-% numChans=header.acq.numberOfChannelsAcquire;
-% zoomFactor=header.acq.zoomFactor;
-% frameRate=header.acq.frameRate;
-% 
-% CS = zeros(numFrames,256,256);  %CS- calcium signal channel
-% 
-% for(i=1:numFrames)
-%     CS(i,:,:)=imread(f2,'Index',GCaMPch+(i-1)*numChans);  %use 1+(i-1)*3 if first channel aquired is calcium signal and three channels were aquired
-% end
-% 
-% CSm = squeeze(mean(CS,1));
-% CSm = (CSm-min(CSm(:)))/(max(CSm(:))-min(CSm(:)));
-% CSma = imadjust(CSm);
-% 
-% Xc = round(r.x.basePoints);
-% 
-% CSmsk = zeros(size(CSma));
-% 
-% N = 9;
-% 
-%     for(i=1:size(Xc,1))
-%         
-%         ii = Xc(i,2)-N:Xc(i,2)+N;
-%         jj = Xc(i,1)-N:Xc(i,1)+N;
-%         %in case near edge:
-%         Nii=N;
-%         Njj=N;
-%         while max(ii) > size(CSma,1)
-%             Nii=Nii-1;
-%             ii = Xc(i,2)-Nii:Xc(i,2)+Nii;
-%         end
-%         while max(jj) > size(CSma,2)
-%             Njj=Njj-1;
-%             ii = Xc(i,2)-Njj:Xc(i,2)+Njj;
-%         end
-%         %
-% %         max(ii)
-% %         max(jj)
-%         CSsub = CSma(ii,jj);      
-%      
-%         i
-%         mCS_ii = cellseg_sk(CSsub, zoomFactor);
-%         CSmsk(ii,jj) = mCS_ii * i;
-%         
-%         if length(ii)<N/2 ||  length(jj)<N/2, 
-%             beep;
-%             disp('too close to edge, please re-do or consider eliminating cell number:')
-%             disp(i)
-%         end
-%     end
-% 
-% figure()
-% set(gca,'XDir','reverse')
-% imshow(CSma)
-% hold on
-% numcells= size(r.CSsig,1);
-%     for i=1:numcells
-%          [y,x]=find(CSmsk==i);
-%          plot(x(1:6:end),y(1:6:end), '.')
-%          set(gca,'YDir','reverse')
-%          cellID=num2str(i);
-%          text(x(1)-6,y(1), cellID,'FontSize', 16,'FontWeight','bold','Color',[1 0.694117647058824 0.392156862745098]);
-%          hold on
-%     end
-%     hold off
-%     ylim([0 256])
-%     xlim([0 256])
-%%%%%%%%%%%%%
 
 mkdir('Analysis');
 cd ('Analysis');
 indexUS= strfind(r.image(1).f, '_');
 indexUS_last=indexUS(end);
-filenameprefix1= f(1:indexUS_last+3);
-contrastStrValue= [num2str(r.visStimParamFile.contrast*100)];
+filenameprefix1= r.image(1).f(1:indexUS_last+3);
+contrastStrValue= [num2str(r.image(1).visStimParamFile.contrast*100)];
 sf = [filenameprefix1 '-' contrastStrValue];
 
 [sf,sp]= uiputfile('.mat', ['Save responses for image file: ' filenameprefix1], sf);
 save(sf,'r');
 
 cd (originaldirectory);
-f
 
 
 
