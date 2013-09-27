@@ -1,4 +1,4 @@
-function generate_summary_figure
+function generate_summary_figure(image)
 
 for i=1:size(image.CSsig,1);
     cellID=i;

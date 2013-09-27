@@ -3,7 +3,7 @@
 %Data aquired using ScanImage
 %Currently requires 256x256 tiff images.  Interpolate to resize if
 %necessary.
-function [r] = dlr_analyse_visStim
+function [r] = dlr_analyse_visStim(varargin)
 originaldirectory=pwd;
 
 genFigures=0;
@@ -11,10 +11,16 @@ numTrials = 4;
 
 r.image(1) = load_image_with_visStim;
 
-%select cells for analysis across trials
-[~, ~,x] = cpselect_sk(r.image(1).fuse,r.image(1).CSma, 'Wait',true); %modified toolbox cpselect so outputs ALL cells, not just pairs
-% imcontrast(gca)  %possible to incorperate imcontrast to adjust image contrast
-r.image(1).basePoints = round(x.basePoints);
+if nargin == 0
+    %select cells for analysis across trials
+    [~, ~,x] = cpselect_sk(r.image(1).fuse,r.image(1).CSma, 'Wait',true); %modified toolbox cpselect so outputs ALL cells, not just pairs
+    % imcontrast(gca)  %possible to incorperate imcontrast to adjust image contrast
+    r.image(1).basePoints = round(x.basePoints);
+    r.basePoints = round(x.basePoints);
+else
+    r.basePoints = varargin{1}
+    r.image(1).basePoints = r.basePoints
+end
 
 % generate mask from image
 r.image(1).CSmsk = generate_CS_mask(r.image(1));
@@ -56,9 +62,6 @@ for i=2:numTrials
     % now pull the signals out...
     new_image.CSsig = generate_CS_signal_map(new_image)
 
-    %generate figure that labels cells
-    generate_labeled_figure(new_image);
-
     [new_image.stimOnsets, ...
     new_image.stimOffsets, ...
     new_image.baseline, ...
@@ -72,13 +75,14 @@ for i=2:numTrials
     new_image.responseOrdered_Traces] = calculate_data(new_image);
 
     %this plots stimonsets.
-    generate_onsets_figure(new_image);
-	
+
 	r.image(i) = new_image;
 
     % %plot raw fluorescence traces for each cell:
 
     if genFigures
+        generate_labeled_figure(r.image(i));
+        generate_onsets_figure(r.image(i));
         generate_raw_fluorescence_figure(r.image(i))
         generate_ordered_fluorescence_figure(r.image(i))
     end % if genFigures
