@@ -12,5 +12,5 @@ for i=[r100, r50, r25, r12, r6]
     responseOrdered(:,2:13) = i.meanResponses(:,1:12);
     theta = 0:(2*pi)/12:2*pi;
     polar(theta, responseOrdered);
-    hold on
+    hold all
 end
