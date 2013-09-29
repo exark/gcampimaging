@@ -201,10 +201,48 @@ for i= 1: size(r.CSsig,1)
 end
 
 %determine orientation preference for each pixel
-% r.orientationPrefs = cell(size(r.CSsig,1),1)
-% for i=1:size(r.CSsig,1)
-%     
+r.orientationPrefs = cell(size(r.CSsig,1),1);
+stimuli={'0' '30' '60' '90' '120' '150' '180' '210' '240' '270' '300' '330'};
+for i=1:size(r.CSsig,1)
+    responses = r.responseOrdered_MeanAmplitude(i,:);
+    [val, index] = max(responses);
+    r.orientationPrefs(i) = stimuli(index);
+end
 
+pxp_map = zeros(256,256,3,'uint8')
+
+for i=1:size(r.CSsig,1)
+    orientation_color = 0;
+    orientation = r.orientationPrefs(i);
+    if strcmp(orientation,stimuli(1))
+        orientation_color=[159 238 0];
+    elseif strcmp(orientation,stimuli(2))
+        orientation_color=[134 179 45];
+    elseif strcmp(orientation,stimuli(3))
+        orientation_color=[103 155 0];
+    elseif strcmp(orientation,stimuli(4))
+        orientation_color=[201 247 111];
+    elseif strcmp(orientation,stimuli(5))
+        orientation_color=[255 0 0];
+    elseif strcmp(orientation,stimuli(6))
+        orientation_color=[191 48 48];
+    elseif strcmp(orientation,stimuli(7))
+        orientation_color=[166 0 0];
+    elseif strcmp(orientation,stimuli(8))
+        orientation_color=[255 115 115];
+    elseif strcmp(orientation,stimuli(9))
+        orientation_color=[113 9 170];
+    elseif strcmp(orientation,stimuli(10))
+        orientation_color=[95 37 128];
+    elseif strcmp(orientation,stimuli(11))
+        orientation_color=[72 3 111];
+    else
+        orientation_color=[173 102 213];
+    end
+    pxp_map(r.x(i),r.y(i),:) = orientation_color;
+end
+
+image(pxp_map);
 disp(toc)
 % mkdir('Analysis');
 % cd ('Analysis');
