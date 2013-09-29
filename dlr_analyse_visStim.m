@@ -13,7 +13,7 @@ REDch=2;
 PDch=3;
 ballTRACKch=4;
 
-thresh=0.5;
+thresh=0.2;
 multMagnitude=4.5;
 
 
