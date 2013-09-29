@@ -3,18 +3,19 @@
 %Data aquired using ScanImage
 %Currently requires 256x256 tiff images.  Interpolate to resize if
 %necessary.
-function [r] = dlr_analyse_visStim
+function [r] = pxp_analysis
+tic;
 originaldirectory=pwd;
 
-genFigures=1;
+genFigures=0;
 
 GCaMPch=1;
 REDch=2;
 PDch=3;
 ballTRACKch=4;
 
-thresh=0.2;
-multMagnitude=4.5;
+thresh=0.1;
+multMagnitude=10;
 
 
 [f,p]  = uigetfile('*.tif','Select your 3 or 4 chan file');            % generalized to 4 channels Aug3 2013    
@@ -84,58 +85,32 @@ for (j=1:numFrames)
     end
 end
 
-%determine if total magnitude change over the entire span of the experiment
-%is greater than multMagnitude. Excise pixels from data set that don't meet
-%this
-
-filteredX = []
-for (i=1:length(x))
-    maxValue=0;
-    minValue=0;
-    for (j=1:numFrames)
-        if CSsig(i,j) > maxValue
-            maxValue = CSsig(i,j);
-        elseif CSsig(i,j) < minValue
-            maxValue = CSsig(i,j);
-        end
-    end
-    if (maxValue/minValue) >= multMagnitude
-        filteredX = [filteredX i];
-    end
-end
-
 r.filename = hgeneric(1, 1).Filename;
 r.mask = CSmsk;
 r.CSimage = CSma;
 r.CSsig= CSsig;
 r.PDm=PDm;
 r.numFrames=numFrames;
-r.x=x; %points, output from cpselect
+r.x = x
+r.y = y
 
-%generate figure that labels cells
-% maskOverlay= imfuse(r.mask,r.CSimage, 'blend');
-% maskOverlay= imfuse(r.CSimage, maskOverlay, 'montage');
 % figure()
-% imshow(maskOverlay);
-% title 'Mask Overlay'
-
-figure()
-set(gca,'XDir','reverse')
-imshow(r.CSimage)
-hold on
-numcells= size(r.CSsig,1);
-    for i=1:numcells
-        newX = x(i);
-        newY = y(i);
-        plot(newX,newY, '.')
-        set(gca,'YDir','reverse')
-        cellID=num2str(i);
-        %text(newX-6,y(1), cellID,'FontSize', 16,'FontWeight','bold','Color',[1 0.694117647058824 0.392156862745098]);
-        hold on
-    end
-    hold off
-    ylim([0 256])
-    xlim([0 256])
+% set(gca,'XDir','reverse')
+% imshow(r.CSimage)
+% hold on
+% numcells= size(x,1);
+%     for i=1:numcells
+%         newX = x(i);
+%         newY = y(i);
+%         plot(newX,newY, '.')
+%         set(gca,'YDir','reverse')
+%         cellID=num2str(i);
+%         %text(newX-6,y(1), cellID,'FontSize', 16,'FontWeight','bold','Color',[1 0.694117647058824 0.392156862745098]);
+%         hold on
+%     end
+%     hold off
+%     ylim([0 256])
+%     xlim([0 256])
 
 
 
@@ -179,13 +154,13 @@ r.stimOffsets= stimOffsets; %same for all cells
 
 
 
-figure()
-plot(r.PDm);
-hold on
-plot(r.stimOnsets,r.PDm(r.stimOnsets), 'r*')
-plot(r.stimOffsets,r.PDm(r.stimOffsets), 'g*')
-hold off
-title StimOnsets
+% figure()
+% plot(r.PDm);
+% hold on
+% plot(r.stimOnsets,r.PDm(r.stimOnsets), 'r*')
+% plot(r.stimOffsets,r.PDm(r.stimOffsets), 'g*')
+% hold off
+% title StimOnsets
 
 
 % % defining baseline for each individual cell here:
@@ -225,127 +200,24 @@ for i= 1: size(r.CSsig,1)
     end
 end
 
+%determine orientation preference for each pixel
+% r.orientationPrefs = cell(size(r.CSsig,1),1)
+% for i=1:size(r.CSsig,1)
+%     
 
-r.responseOrdered_Traces= zeros(12,15,size(r.CSsig,1));
-% in case not enough frames were collected after last stim onset
-if numFrames< r.stimOnsets(end)+12
-    beep;
-    disp('Padding, not enough frames collected')
-    r.responseOrdered_Traces= zeros(12,15,r.stimOnsets(end)+12);
-    for i=1:size(r.CSsig,1)
-        r.CSsig(i,end:end+diff([r.stimOnsets(end) numFrames]+1))= r.baseline(i);
-    end
-end
-%
-for i= 1: size(r.CSsig,1)
-    for j=1:12
-        %j
-        r.responseOrdered_Traces(j,1:15,i)=...
-            ( r.CSsig(i,r.stimOnsets(r.stimOrderIndex(i,j))-2:r.stimOnsets(r.stimOrderIndex(i,j))+12) )/ r.baseline(i);
-    end
-end
+disp(toc)
+% mkdir('Analysis');
+% cd ('Analysis');
+% indexUS= strfind(f, '_');
+% indexUS_last=indexUS(end);
+% filenameprefix1= f(1:indexUS_last+3);
+% contrastStrValue= [num2str(r.visStimParamFile.contrast*100)];
+% sf = [filenameprefix1 '-' contrastStrValue];
+% 
+% [sf,sp]= uiputfile('.mat', ['Save responses for image file: ' filenameprefix1], sf);
+% save(sf,'r');
 
-
-% %plot raw fluorescence traces for each cell:
-
-if genFigures
-
-plotEnd= min([max(r.stimOffsets)+5], [r.numFrames]);
-xaxisFrames=1:r.numFrames;
-
-%for i=1: size(r.CSsig,1)
-for i=1:5
-fh=figure();
-cellname=['cell ID ' num2str(i)];
-baselineTextValue= ['Baseline: ' num2str(round(r.baseline(i)))];
-contrastTextValue= ['Contrast: ' num2str(r.visStimParamFile.contrast)];
-
-plot ([r.stimOnsets r.stimOnsets], [mean(r.CSsig(i,:))*.95 mean(r.CSsig(i,:))*1.2], 'LineWidth', 1, 'Color', [0.4 0.4 0.4])
-hold on
-plot ([r.stimOffsets r.stimOffsets], [mean(r.CSsig(i,:))*.95 mean(r.CSsig(i,:))*1.2], 'LineWidth', 1, 'Color', [0.8 0.8 0.8])
-plot ([1:plotEnd],r.CSsig(i,1:plotEnd),  'LineWidth', 2,'Color','k')
-plot ([xaxisFrames(r.stimOnsets-1)],r.CSsig(i,r.stimOnsets-1), 'r.')
-plot ([xaxisFrames(r.stimOnsets-2)],r.CSsig(i,r.stimOnsets-2), 'r.')
-plot ([xaxisFrames(r.stimOnsets)],r.CSsig(i,r.stimOnsets), 'r.')
-hold off
-title ({'Raw Fluorescence';cellname});
-ylabel ('Arbitrary units')
-xlabel ('frame number')
-% Create textbox
-annotation(fh,'textbox',...
-    [0.678571428571429 0.833333333333336 0.214285714285713 0.0595238095238156],...
-    'String',{baselineTextValue},...
-    'FontSize',12,...
-    'FontName','Arial',...
-    'FitBoxToText','off',...
-    'LineStyle','none',...
-    'Color',[0.847058832645416 0.160784319043159 0]);
-annotation(fh,'textbox',...
-    [0.678928571428572 0.768095238095242 0.214285714285713 0.0595238095238156],...
-    'String',{contrastTextValue},...
-    'FontSize',12,...
-    'FontName','Arial',...
-    'FitBoxToText','off',...
-    'LineStyle','none',...
-    'Color',[0 0 0]);
-ylim ([r.baseline(i)-50 max(r.CSsig(i,1:plotEnd)+25)]);
-    for j= 1: size(r.visStimParamFile.driftAngle,2)        
-%         if r.visStimParamFile.randomOrder==0,
-%          oriPresented= r.visStimParamFile.driftAngle(j);        
-%           [r.stimOrder, r.stimulusParameters, ~]= loadAndDecodeVisStimMatFile (mp, mf);
-%         end
-     oriPresented= r.stimOrder(1,j);  
-     place12OriArrows(oriPresented,j,fh); %calls a function to draw arrow of appropriate orientation
-    end
-end
-
-
-figure();
-responseOrdered(:,1)= r.responseOrdered_MeanAmplitude(:,12);
-responseOrdered(:,2:13)= r.responseOrdered_MeanAmplitude(:,1:12);
-plot(1:13,responseOrdered(:,1:13));
-set(gca,'XTick', 1:13);
-set(gca,'XTickLabel', {'0', '30', '60', '90', '120', '150','180', '210', '240', '270', '300', '330', '0'});
-
-
-
-% % can comment
-
-for i=1:5
-%for i=1:size(r.CSsig,1);
-    cellID=i;
-%cellID=1;
-cellIDstr=['cell ID ' num2str(cellID)];
-x=[1:15; 17:17+14; 33:33+14; 48:48+14; 63:63+14; 77:77+14; 92:92+14; 107:107+14; 122:122+14; 137:137+14; 152:152+14; 167:167+14];
-figure()
-plot(x(1,:),r.responseOrdered_Traces(1,:,cellID))
-hold on
-for j=2:12,
-    plot(x(j,:),r.responseOrdered_Traces(j,:,cellID))
-    ylabel ('F/F0')
-    xlabel('Degrees')
-end
-title (cellIDstr)
-set(gca, 'XTick', [1 17 33 48 63 77 92 107 122 137 152 167]);
-set(gca,'XTickLabel', {'30', '60', '90', '120', '150','180', '210', '240', '270', '300', '330', '0'});
-end
-
-end % if genFigures
-% % save file with promt and name suggestion
-
-mkdir('Analysis');
-cd ('Analysis');
-indexUS= strfind(f, '_');
-indexUS_last=indexUS(end);
-filenameprefix1= f(1:indexUS_last+3);
-contrastStrValue= [num2str(r.visStimParamFile.contrast*100)];
-sf = [filenameprefix1 '-' contrastStrValue];
-
-[sf,sp]= uiputfile('.mat', ['Save responses for image file: ' filenameprefix1], sf);
-save(sf,'r');
-
-cd (originaldirectory);
-f
+% cd (originaldirectory);
 
 
 
