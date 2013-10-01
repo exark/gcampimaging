@@ -4,7 +4,6 @@
 %Currently requires 256x256 tiff images.  Interpolate to resize if
 %necessary.
 function [r] = pxp_analysis
-tic;
 originaldirectory=pwd;
 
 genFigures=0;
@@ -91,8 +90,8 @@ r.CSimage = CSma;
 r.CSsig= CSsig;
 r.PDm=PDm;
 r.numFrames=numFrames;
-r.x = x
-r.y = y
+r.x = x;
+r.y = y;
 
 % figure()
 % set(gca,'XDir','reverse')
@@ -209,7 +208,7 @@ for i=1:size(r.CSsig,1)
     r.orientationPrefs(i) = stimuli(index);
 end
 
-pxp_map = zeros(256,256,3,'uint8')
+r.pxp_map = zeros(256,256,3,'uint8');
 
 for i=1:size(r.CSsig,1)
     orientation_color = 0;
@@ -239,11 +238,13 @@ for i=1:size(r.CSsig,1)
     else
         orientation_color=[173 102 213];
     end
-    pxp_map(r.x(i),r.y(i),:) = orientation_color;
+    r.pxp_map(r.x(i),r.y(i),:) = orientation_color;
 end
 
-image(pxp_map);
-disp(toc)
+figure()
+image(r.pxp_map);
+axis off;
+axis image;
 % mkdir('Analysis');
 % cd ('Analysis');
 % indexUS= strfind(f, '_');
