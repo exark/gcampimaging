@@ -3,372 +3,110 @@
 %Data aquired using ScanImage
 %Currently requires 256x256 tiff images.  Interpolate to resize if
 %necessary.
-function [r] = dlr_analyse_visStim
+function [r] = dlr_analyse_visStim(varargin)
 originaldirectory=pwd;
 
-genFigures=1;
+genFigures=0;
+numTrials = 4;
 
-GCaMPch=1;
-REDch=2;
-PDch=3;
-ballTRACKch=4;
+r.image(1) = load_image_with_visStim;
 
-
-[f,p]  = uigetfile('*.tif','Select your 3 or 4 chan file');            % generalized to 4 channels Aug3 2013    
-
-
-% [mf,mp]  = uigetfile('*.mat','Select your .mat vis stim file');
-% mf
-
-%select .mat vis stim file with suggestion:
-dir('*.mat');
-DirInfoImage=dir(f);
-DirInfoVSF=dir('*.mat');
-
-for i=1:size(DirInfoVSF,1)
-    ad(i)=abs(diff([DirInfoImage.datenum DirInfoVSF(i).datenum]));
-end
-[~,indexMin]= min(ad); 
-mfSuggest=DirInfoVSF(indexMin).name;
-[mf,mp]  = uigetfile(mfSuggest,'Select your .mat vis stim file');
-
-
-%read in header info of image file
-hgeneric=imfinfo([p f]);
-header=hgeneric(1).ImageDescription;
-header=parseHeader(header);
-%ScanImage specifc:
-numFrames=header.acq.numberOfFrames;
-pxPline=header.acq.pixelsPerLine;
-linePfram=header.acq.linesPerFrame;
-numChans=header.acq.numberOfChannelsAcquire;
-zoomFactor=header.acq.zoomFactor;
-frameRate=header.acq.frameRate;
-
-CS = zeros(numFrames,256,256);  %CS- calcium signal channel
-R = zeros(numFrames,256,256); %R- red channel
-PD = zeros(256,256,numFrames);  % photodiode channel, feedback from vis stim monitor
-
-for(i=1:numFrames)
-    CS(i,:,:)=imread(f,'Index',GCaMPch+(i-1)*numChans);  %use 1+(i-1)*3 if first channel aquired is calcium signal and three channels were aquired
-    R(i,:,:)=imread(f,'Index',REDch+(i-1)*numChans); %1+(i-1)*3 is becuase three channels were aquired
-    PD(:,:,i) = imread(f,'Index',PDch+(i-1)*numChans);
-end
-PDm= squeeze(mean(mean(PD)));
-
-CSm = squeeze(mean(CS,1));
-CSm = (CSm-min(CSm(:)))/(max(CSm(:))-min(CSm(:)));
-CSma = imadjust(CSm);
-
-Rm = squeeze(mean(R,1));
-Rm = (Rm-min(Rm(:)))/(max(Rm(:))-min(Rm(:)));
-Rma = imadjust(Rm);
-
-fuse=imfuse(CSma,Rma, 'falsecolor', 'colorchannels', [2,1,0]);
-
- [~, ~,x] = cpselect_sk(fuse,CSma, 'Wait',true); %modified toolbox cpselect so outputs ALL cells, not just pairs
-%[~, ~,x] = cpselect_sk(CSma,CSma, 'Wait',true); %modified toolbox cpselect so outputs ALL cells, not just pairs
-
-% imcontrast(gca)  %possible to incorperate imcontrast to adjust image contrast
-Xc = round(x.basePoints);
-
-
-CSmsk = zeros(size(CSma));
-
-
-N = 9;
-if zoomFactor==4,
-    N= round(N*2.0); %zoom4
-end
-if zoomFactor==3,
-    N= 14; %zoom3
+if nargin == 0
+    %select cells for analysis across trials
+    [~, ~,x] = cpselect_sk(r.image(1).fuse,r.image(1).CSma, 'Wait',true); %modified toolbox cpselect so outputs ALL cells, not just pairs
+    % imcontrast(gca)  %possible to incorperate imcontrast to adjust image contrast
+    r.image(1).basePoints = round(x.basePoints);
+    r.basePoints = round(x.basePoints);
+else
+    r.basePoints = varargin{1}
+    r.image(1).basePoints = r.basePoints
 end
 
-    for(i=1:size(Xc,1))
-        
-        ii = Xc(i,2)-N:Xc(i,2)+N;
-        jj = Xc(i,1)-N:Xc(i,1)+N;
-        %in case near edge:
-        Nii=N;
-        Njj=N;
-        while max(ii) > size(CSma,1)
-            Nii=Nii-1;
-            ii = Xc(i,2)-Nii:Xc(i,2)+Nii;
-        end
-        while max(jj) > size(CSma,2)
-            Njj=Njj-1;
-            ii = Xc(i,2)-Njj:Xc(i,2)+Njj;
-        end
-        %
-%         max(ii)
-%         max(jj)
-        CSsub = CSma(ii,jj);      
-     
-        i
-        mCS = cellseg_sk(CSsub, zoomFactor);
-        CSmsk(ii,jj) = mCS * i;
-        
-        if length(ii)<N/2 ||  length(jj)<N/2, 
-            beep;
-            disp('too close to edge, please re-do or consider eliminating cell number:')
-            disp(i)
-        end
-    end
-
+% generate mask from image
+r.image(1).CSmsk = generate_CS_mask(r.image(1));
 
 % now pull the signals out...
-
-ncells = size(Xc,1);
-for(i=1:ncells)
-    
-    idxCS = find(CSmsk==i); idxCS = idxCS(:);
-    for(j=1:numFrames)
-        imgCS = squeeze(CS(j,:,:));      
-        
-        %Calcium Signal, this is the primary output
-        CSsig(i,j) = mean(imgCS(idxCS));  
-        
-    end
-end
-
-r.filename = hgeneric(1, 1).Filename;
-r.mask = CSmsk;
-r.CSimage = CSma;
-r.CSsig= CSsig;
-r.PDm=PDm;
-r.numFrames=numFrames;
-r.x=x; %points, output from cpselect
+r.image(1).CSsig = generate_CS_signal_map(r.image(1))
 
 %generate figure that labels cells
-% maskOverlay= imfuse(r.mask,r.CSimage, 'blend');
-% maskOverlay= imfuse(r.CSimage, maskOverlay, 'montage');
-% figure()
-% imshow(maskOverlay);
-% title 'Mask Overlay'
 
-figure()
-set(gca,'XDir','reverse')
-imshow(r.CSimage)
-hold on
-numcells= size(r.CSsig,1);
-    for i=1:numcells
-         [y,x]=find(r.mask==i); 
-         plot(x(1:6:end),y(1:6:end), '.')
-         set(gca,'YDir','reverse')
-         cellID=num2str(i);
-         text(x(1)-6,y(1), cellID,'FontSize', 16,'FontWeight','bold','Color',[1 0.694117647058824 0.392156862745098]);
-         hold on
-    end
-    hold off
-    ylim([0 256])
-    xlim([0 256])
-
-
-
-% % defining stim onset here:
-
-[n,hout]=hist(r.PDm);
-[~,inx]=max(n(2:end-1));
-inx=inx+1; %since n(2:
-stimLevel=max(hout(inx));
-blankWLevel= max(r.PDm);
-blankBLevel= min(r.PDm);
-
-
-frameStimIndex= zeros(numFrames,1);
-
-%lower left corner
-indMax =find(r.PDm>blankWLevel-50);
-frameTransitions1=find(abs(diff(r.PDm(indMax(1):end)))>2900); %500 %3200
-% figure()
-% plot(abs(diff(r.PDm(indMax(1):end))))
-inxDoubleCount=find(diff(frameTransitions1)<2);
-frameTransitions1(inxDoubleCount+1)=NaN;
-frameTransitions1=frameTransitions1(isfinite(frameTransitions1));
-
-frameTransitions1= frameTransitions1+ indMax(1)-1;
-stimOnsets= frameTransitions1(1:2:numel(frameTransitions1));
-stimOnsets=stimOnsets(1:12);  %change 12 if number of presentations is altered
-
-
-for i=1:numel(stimOnsets)
-    if (r.PDm(stimOnsets(i))/blankWLevel)*100 >98 || (r.PDm(stimOnsets(i))/blankBLevel)*100 <105
-        stimOnsets(i)=stimOnsets(i)+1;
-    end
-end
-
-stimOffsets= frameTransitions1(2:2:numel(frameTransitions1));
-stimOffsets(end+1)= stimOnsets(end)+5; %invalid with 5. ignore or recalculate
-
-r.stimOnsets= stimOnsets; %same for all cells
-r.stimOffsets= stimOffsets; %same for all cells
-
-
-
-figure()
-plot(r.PDm);
-hold on
-plot(r.stimOnsets,r.PDm(r.stimOnsets), 'r*')
-hold off
-title StimOnsets
-
-
-% % defining baseline for each individual cell here:
-for i= 1: size(r.CSsig,1)
-    r.baseline(i)= (mean([r.CSsig(i,r.stimOnsets) r.CSsig(i,r.stimOnsets-1) r.CSsig(i,r.stimOnsets-2)]));
-end
-
-% % get vis stim parameters(general, same for all cells):
-r.visStimParamFile=load ([mp mf]);
-r.vsParamFilename= mf;
-[r.stimOrder, r.stimulusParameters, ~]= loadAndDecodeVisStimMatFile (mp, mf);
-
-% % deltaF/F
-r.stimOrderIndex= zeros(size(r.CSsig,1),size(r.stimOnsets,1));
-for i= 1: size(r.CSsig,1)
-   count=1;
-    for j=30:30:360        
-        r.stimOrderIndex(i,count)=find(r.stimOrder(1,:)==j);
-        count=count+1;
-    end    
-end
-
-r.responseOrdered_MeanAmplitude= zeros(size(r.CSsig,1),12);
-for i= 1: size(r.CSsig,1)
-    for j=1:12
-        r.responseOrdered_MeanAmplitude(i,j)=...
-            mean( r.CSsig(i,r.stimOnsets(r.stimOrderIndex(i,j))+1:r.stimOnsets(r.stimOrderIndex(i,j))+5) )/ r.baseline(i);
-    end
-end
-
-r.responseOrdered_localBaseine= zeros(size(r.CSsig,1),12);
-for i= 1: size(r.CSsig,1)
-    for j=1:12
-        r.responseOrdered_localBaseine(i,j)=...
-            mean( r.CSsig(i,r.stimOnsets(r.stimOrderIndex(i,j))+1:r.stimOnsets(r.stimOrderIndex(i,j))+5) )/ ...
-            (mean([r.CSsig(i,r.stimOnsets) r.CSsig(i,r.stimOnsets-1) r.CSsig(i,r.stimOnsets-2)]));
-    end
-end
-
-
-r.responseOrdered_Traces= zeros(12,15,size(r.CSsig,1));
-% in case not enough frames were collected after last stim onset
-if numFrames< r.stimOnsets(end)+12
-    beep;
-    disp('Padding, not enough frames collected')
-    r.responseOrdered_Traces= zeros(12,15,r.stimOnsets(end)+12);
-    for i=1:size(r.CSsig,1)
-        r.CSsig(i,end:end+diff([r.stimOnsets(end) numFrames]+1))= r.baseline(i);
-    end
-end
-%
-for i= 1: size(r.CSsig,1)
-    for j=1:12
-        %j
-        r.responseOrdered_Traces(j,1:15,i)=...
-            ( r.CSsig(i,r.stimOnsets(r.stimOrderIndex(i,j))-2:r.stimOnsets(r.stimOrderIndex(i,j))+12) )/ r.baseline(i);
-    end
-end
-
+[r.image(1).stimOnsets, ...
+r.image(1).stimOffsets, ...
+r.image(1).baseline, ...
+r.image(1).visStimParamFile, ...
+r.image(1).vsParamFilename, ...
+r.image(1).stimOrder, ...
+r.image(1).stimulusParameters, ...
+r.image(1).stimOrderIndex, ...
+r.image(1).responseOrdered_MeanAmplitude, ...
+r.image(1).responseOrdered_localBaseline, ...
+r.image(1).responseOrdered_Traces] = calculate_data(r.image(1));
 
 % %plot raw fluorescence traces for each cell:
 
 if genFigures
-
-plotEnd= min([max(r.stimOffsets)+5], [r.numFrames]);
-xaxisFrames=1:r.numFrames;
-
-for i=1: size(r.CSsig,1)
-fh=figure();
-cellname=['cell ID ' num2str(i)];
-baselineTextValue= ['Baseline: ' num2str(round(r.baseline(i)))];
-contrastTextValue= ['Contrast: ' num2str(r.visStimParamFile.contrast)];
-
-plot ([r.stimOnsets r.stimOnsets], [mean(r.CSsig(i,:))*.95 mean(r.CSsig(i,:))*1.2], 'LineWidth', 1, 'Color', [0.4 0.4 0.4])
-hold on
-plot ([r.stimOffsets r.stimOffsets], [mean(r.CSsig(i,:))*.95 mean(r.CSsig(i,:))*1.2], 'LineWidth', 1, 'Color', [0.8 0.8 0.8])
-plot ([1:plotEnd],r.CSsig(i,1:plotEnd),  'LineWidth', 2,'Color','k')
-plot ([xaxisFrames(r.stimOnsets-1)],r.CSsig(i,r.stimOnsets-1), 'r.')
-plot ([xaxisFrames(r.stimOnsets-2)],r.CSsig(i,r.stimOnsets-2), 'r.')
-plot ([xaxisFrames(r.stimOnsets)],r.CSsig(i,r.stimOnsets), 'r.')
-hold off
-title ({'Raw Fluorescence';cellname});
-ylabel ('Arbitrary units')
-xlabel ('frame number')
-% Create textbox
-annotation(fh,'textbox',...
-    [0.678571428571429 0.833333333333336 0.214285714285713 0.0595238095238156],...
-    'String',{baselineTextValue},...
-    'FontSize',12,...
-    'FontName','Arial',...
-    'FitBoxToText','off',...
-    'LineStyle','none',...
-    'Color',[0.847058832645416 0.160784319043159 0]);
-annotation(fh,'textbox',...
-    [0.678928571428572 0.768095238095242 0.214285714285713 0.0595238095238156],...
-    'String',{contrastTextValue},...
-    'FontSize',12,...
-    'FontName','Arial',...
-    'FitBoxToText','off',...
-    'LineStyle','none',...
-    'Color',[0 0 0]);
-ylim ([r.baseline(i)-50 max(r.CSsig(i,1:plotEnd)+25)]);
-    for j= 1: size(r.visStimParamFile.driftAngle,2)        
-%         if r.visStimParamFile.randomOrder==0,
-%          oriPresented= r.visStimParamFile.driftAngle(j);        
-%           [r.stimOrder, r.stimulusParameters, ~]= loadAndDecodeVisStimMatFile (mp, mf);
-%         end
-     oriPresented= r.stimOrder(1,j);  
-     place12OriArrows(oriPresented,j,fh); %calls a function to draw arrow of appropriate orientation
-    end
-end
-
-
-figure();
-responseOrdered(:,1)= r.responseOrdered_MeanAmplitude(:,12);
-responseOrdered(:,2:13)= r.responseOrdered_MeanAmplitude(:,1:12);
-plot(1:13,responseOrdered(:,1:13));
-set(gca,'XTick', 1:13);
-set(gca,'XTickLabel', {'0', '30', '60', '90', '120', '150','180', '210', '240', '270', '300', '330', '0'});
-
-
-
-% % can comment
-
-for i=1:size(r.CSsig,1);
-    cellID=i;
-%cellID=1;
-cellIDstr=['cell ID ' num2str(cellID)];
-x=[1:15; 17:17+14; 33:33+14; 48:48+14; 63:63+14; 77:77+14; 92:92+14; 107:107+14; 122:122+14; 137:137+14; 152:152+14; 167:167+14];
-figure()
-plot(x(1,:),r.responseOrdered_Traces(1,:,cellID))
-hold on
-for j=2:12,
-    plot(x(j,:),r.responseOrdered_Traces(j,:,cellID))
-    ylabel ('F/F0')
-    xlabel('Degrees')
-end
-title (cellIDstr)
-set(gca, 'XTick', [1 17 33 48 63 77 92 107 122 137 152 167]);
-set(gca,'XTickLabel', {'30', '60', '90', '120', '150','180', '210', '240', '270', '300', '330', '0'});
-end
-
+    generate_labeled_figure(r.image(1));
+    generate_onsets_figure(r.image(1));
+    generate_raw_fluorescence_figure(r.image(1))
+    generate_ordered_fluorescence_figure(r.image(1))
 end % if genFigures
-% % save file with promt and name suggestion
+
+% multiple trail analysis starts here
+
+for i=2:numTrials
+    new_image = load_image_with_visStim;
+    new_image.basePoints = r.image(1).basePoints
+    % generate mask from image
+    new_image.CSmsk = generate_CS_mask(new_image);
+
+    % now pull the signals out...
+    new_image.CSsig = generate_CS_signal_map(new_image)
+
+    [new_image.stimOnsets, ...
+    new_image.stimOffsets, ...
+    new_image.baseline, ...
+    new_image.visStimParamFile, ...
+    new_image.vsParamFilename, ...
+    new_image.stimOrder, ...
+    new_image.stimulusParameters, ...
+    new_image.stimOrderIndex, ...
+    new_image.responseOrdered_MeanAmplitude, ...
+    new_image.responseOrdered_localBaseline, ...
+    new_image.responseOrdered_Traces] = calculate_data(new_image);
+
+    %this plots stimonsets.
+
+	r.image(i) = new_image;
+
+    % %plot raw fluorescence traces for each cell:
+
+    if genFigures
+        generate_labeled_figure(r.image(i));
+        generate_onsets_figure(r.image(i));
+        generate_raw_fluorescence_figure(r.image(i))
+        generate_ordered_fluorescence_figure(r.image(i))
+    end % if genFigures
+end
+
+% generate mean response from all trials
+concatted_ordered_responses = cat(1,r.image(1).responseOrdered_MeanAmplitude, ...
+    r.image(2).responseOrdered_MeanAmplitude, ...
+    r.image(3).responseOrdered_MeanAmplitude, ...
+    r.image(4).responseOrdered_MeanAmplitude);
+r.meanResponses = mean(concatted_ordered_responses);
 
 mkdir('Analysis');
 cd ('Analysis');
-indexUS= strfind(f, '_');
+indexUS= strfind(r.image(1).f, '_');
 indexUS_last=indexUS(end);
-filenameprefix1= f(1:indexUS_last+3);
-contrastStrValue= [num2str(r.visStimParamFile.contrast*100)];
+filenameprefix1= r.image(1).f(1:indexUS_last+3);
+contrastStrValue= [num2str(r.image(1).visStimParamFile.contrast*100)];
 sf = [filenameprefix1 '-' contrastStrValue];
 
 [sf,sp]= uiputfile('.mat', ['Save responses for image file: ' filenameprefix1], sf);
 save(sf,'r');
 
 cd (originaldirectory);
-f
 
 
 
