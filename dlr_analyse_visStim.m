@@ -9,17 +9,48 @@ originaldirectory=pwd;
 genFigures=0;
 numTrials = 4;
 
-r.image(1) = load_image_with_visStim;
+if nargin == 1
+    basePoints = varargin{1}
+elseif nargin == 8
+    f = cell(1,8);
+    p = cell(1,8);
+    f{1} = vargin{1};
+    p{1} = vargin{2};
+    f{2} = vargin{3};
+    p{2} = vargin{4};
+    f{3} = vargin{5};
+    p{3} = vargin{6};
+    f{4} = vargin{7};
+    p{4} = vargin{8};
+elseif nargin == 9
+    basePoints = varargin{1};
+    f = cell(1,4);
+    p = cell(1,4);
+    f{1} = vargin{2};
+    p{1} = vargin{3};
+    f{2} = vargin{4};
+    p{2} = vargin{5};
+    f{3} = vargin{6};
+    p{3} = vargin{7};
+    f{4} = vargin{8};
+    p{4} = vargin{9};
+end
 
-if nargin == 0
+if exist(f)
+    r.image(1) = load_image_with_visStim(f{1}, p{1});
+else
+    r.image(1) = load_image_with_visStim;
+end
+
+if exist(basePoints)
+    r.basePoints = basePoints
+    r.image(1).basePoints = r.basePoints
+else
     %select cells for analysis across trials
     [~, ~,x] = cpselect_sk(r.image(1).fuse,r.image(1).CSma, 'Wait',true); %modified toolbox cpselect so outputs ALL cells, not just pairs
     % imcontrast(gca)  %possible to incorperate imcontrast to adjust image contrast
     r.image(1).basePoints = round(x.basePoints);
     r.basePoints = round(x.basePoints);
-else
-    r.basePoints = varargin{1}
-    r.image(1).basePoints = r.basePoints
 end
 
 % generate mask from image
@@ -54,7 +85,11 @@ end % if genFigures
 % multiple trail analysis starts here
 
 for i=2:numTrials
-    new_image = load_image_with_visStim;
+    if exists(f)
+        new_image = load_image_with_visStim(f{i},p{i});
+    else
+        new_image = load_image_with_visStim;
+    end
     new_image.basePoints = r.image(1).basePoints
     % generate mask from image
     new_image.CSmsk = generate_CS_mask(new_image);

@@ -1,11 +1,15 @@
-function [image] = load_image_with_visStim
+function [image] = load_image_with_visStim(varargin)
 
 GCaMPch=1;
 REDch=2;
 PDch=3;
 ballTRACKch=4;
 
-[f,p]  = uigetfile('*.tif','Select your 3 or 4 chan file');            % generalized to 4 channels Aug3 2013    
+if nargin < 2
+    [f,p]  = uigetfile('*.tif','Select your 3 or 4 chan file');            % generalized to 4 channels Aug3 2013
+else
+    f = varargin{1}
+    p = varargin{2}
 
 %select .mat vis stim file with suggestion:
 dir('*.mat');
@@ -17,12 +21,12 @@ for i=1:size(DirInfoVSF,1)
 end
 [~,indexMin]= min(ad); 
 mfSuggest=DirInfoVSF(indexMin).name;
-[mf,mp]  = uigetfile(mfSuggest,'Select your .mat vis stim file');
+%[mf,mp]  = uigetfile(mfSuggest,'Select your .mat vis stim file');
 
 image.f = f;
 image.p = p;
-image.mf = mf;
-image.mp = mp;
+image.mf = mfSuggest;
+image.mp = p;
 
 %read in header info of image file
 hgeneric=imfinfo([p f]);
