@@ -1,6 +1,6 @@
 function [] = generate_labeled_figure(image)
 
-figure()
+%figure()
 set(gca,'XDir','reverse')
 imshow(image.CSma)
 numCells = size(image.CSsig,1);

@@ -4,13 +4,17 @@
 %Currently requires 256x256 tiff images.  Interpolate to resize if
 %necessary.
 function [r] = dlr_analyse_visStim(varargin)
+% varargs can  be of the form:
+% dlr_analyse_visStim(basepoints)
+% dlr_analyse_visStim(f1, p1, f2, p2, f3, p3, f4, p4)
+% dlr_analyse_visStim(basepoints, f1, p1, f2, p2, f3, p3, f4, p4)
 originaldirectory=pwd;
 
 genFigures = 0;
 numTrials = 4;
 
 if nargin == 1
-    basePoints = varargin{1}
+    basePoints = varargin{1};
 elseif nargin == 8
     f = cell(1,8);
     p = cell(1,8);
@@ -36,15 +40,15 @@ elseif nargin == 9
     p{4} = varargin{9};
 end
 
-if exist('f')
+if exist('f','var')
     r.image(1) = load_image_with_visStim(f{1}, p{1});
 else
     r.image(1) = load_image_with_visStim;
 end
 
-if exist('basePoints')
-    r.basePoints = basePoints
-    r.image(1).basePoints = r.basePoints
+if exist('basePoints','var')
+    r.basePoints = basePoints;
+    r.image(1).basePoints = r.basePoints;
 else
     %select cells for analysis across trials
     [~, ~,x] = cpselect_sk(r.image(1).fuse,r.image(1).CSma, 'Wait',true); %modified toolbox cpselect so outputs ALL cells, not just pairs
@@ -57,7 +61,7 @@ end
 r.image(1).CSmsk = generate_CS_mask(r.image(1));
 
 % now pull the signals out...
-r.image(1).CSsig = generate_CS_signal_map(r.image(1))
+r.image(1).CSsig = generate_CS_signal_map(r.image(1));
 
 %generate figure that labels cells
 
@@ -85,17 +89,17 @@ end % if genFigures
 % multiple trail analysis starts here
 
 for i=2:numTrials
-    if exist('f')
+    if exist('f','var')
         new_image = load_image_with_visStim(f{i},p{i});
     else
         new_image = load_image_with_visStim;
     end
-    new_image.basePoints = r.image(1).basePoints
+    new_image.basePoints = r.image(1).basePoints;
     % generate mask from image
     new_image.CSmsk = generate_CS_mask(new_image);
 
     % now pull the signals out...
-    new_image.CSsig = generate_CS_signal_map(new_image)
+    new_image.CSsig = generate_CS_signal_map(new_image);
 
     [new_image.stimOnsets, ...
     new_image.stimOffsets, ...
@@ -130,16 +134,16 @@ concatted_ordered_responses = cat(1,r.image(1).responseOrdered_MeanAmplitude, ..
     r.image(4).responseOrdered_MeanAmplitude);
 r.meanResponses = mean(concatted_ordered_responses);
 
-mkdir('Analysis');
-cd ('Analysis');
-indexUS= strfind(r.image(1).f, '_');
-indexUS_last=indexUS(end);
-filenameprefix1= r.image(1).f(1:indexUS_last+3);
-contrastStrValue= [num2str(r.image(1).visStimParamFile.contrast*100)];
-sf = [filenameprefix1 '-' contrastStrValue];
-
-[sf,sp]= uiputfile('.mat', ['Save responses for image file: ' filenameprefix1], sf);
-save(sf,'r');
+% mkdir('Analysis');
+% cd ('Analysis');
+% indexUS= strfind(r.image(1).f, '_');
+% indexUS_last=indexUS(end);
+% filenameprefix1= r.image(1).f(1:indexUS_last+3);
+% contrastStrValue= [num2str(r.image(1).visStimParamFile.contrast*100)];
+% sf = [filenameprefix1 '-' contrastStrValue];
+% 
+% [sf,sp]= uiputfile('.mat', ['Save responses for image file: ' filenameprefix1], sf);
+% save(sf,'r');
 
 cd (originaldirectory);
 
