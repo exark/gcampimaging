@@ -6,7 +6,7 @@
 function [r] = dlr_analyse_visStim(varargin)
 originaldirectory=pwd;
 
-genFigures=0;
+genFigures = 0;
 numTrials = 4;
 
 if nargin == 1
@@ -14,35 +14,35 @@ if nargin == 1
 elseif nargin == 8
     f = cell(1,8);
     p = cell(1,8);
-    f{1} = vargin{1};
-    p{1} = vargin{2};
-    f{2} = vargin{3};
-    p{2} = vargin{4};
-    f{3} = vargin{5};
-    p{3} = vargin{6};
-    f{4} = vargin{7};
-    p{4} = vargin{8};
+    f{1} = varargin{1};
+    p{1} = varargin{2};
+    f{2} = varargin{3};
+    p{2} = varargin{4};
+    f{3} = varargin{5};
+    p{3} = varargin{6};
+    f{4} = varargin{7};
+    p{4} = varargin{8};
 elseif nargin == 9
     basePoints = varargin{1};
     f = cell(1,4);
     p = cell(1,4);
-    f{1} = vargin{2};
-    p{1} = vargin{3};
-    f{2} = vargin{4};
-    p{2} = vargin{5};
-    f{3} = vargin{6};
-    p{3} = vargin{7};
-    f{4} = vargin{8};
-    p{4} = vargin{9};
+    f{1} = varargin{2};
+    p{1} = varargin{3};
+    f{2} = varargin{4};
+    p{2} = varargin{5};
+    f{3} = varargin{6};
+    p{3} = varargin{7};
+    f{4} = varargin{8};
+    p{4} = varargin{9};
 end
 
-if exist(f)
+if exist('f')
     r.image(1) = load_image_with_visStim(f{1}, p{1});
 else
     r.image(1) = load_image_with_visStim;
 end
 
-if exist(basePoints)
+if exist('basePoints')
     r.basePoints = basePoints
     r.image(1).basePoints = r.basePoints
 else
@@ -85,7 +85,7 @@ end % if genFigures
 % multiple trail analysis starts here
 
 for i=2:numTrials
-    if exists(f)
+    if exist('f')
         new_image = load_image_with_visStim(f{i},p{i});
     else
         new_image = load_image_with_visStim;
