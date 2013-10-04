@@ -6,13 +6,12 @@ PDch=3;
 ballTRACKch=4;
 
 if nargin < 2
-    [f,p]  = uigetfile('*.tif','Select your 3 or 4 chan file');            % generalized to 4 channels Aug3 2013
+    [f, p]  = uigetfile('*.tif','Select your 3 or 4 chan file');            % generalized to 4 channels Aug3 2013
 else
-    f = varargin{1}
-    p = varargin{2}
+    f = varargin{1};
+    p = varargin{2};
 
 %select .mat vis stim file with suggestion:
-dir('*.mat');
 DirInfoImage=dir(f);
 DirInfoVSF=dir('*.mat');
 
