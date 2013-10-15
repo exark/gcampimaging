@@ -3,30 +3,14 @@
 %Data aquired using ScanImage
 %Currently requires 256x256 tiff images.  Interpolate to resize if
 %necessary.
-function [r] = dlr_analyse_visStim(varargin)
+function [r] = dlr_analyse_visStim_singleton(varargin)
 originaldirectory=pwd;
 
 genFigures=1;
 numTrials = 4;
 
-r = load_image_with_visStim;
+[r, ~] = load_image_with_visStim;
 
-if nargin == 0
-    %select cells for analysis across trials
-    [~, ~,x] = cpselect_sk(r.fuse,r.CSma, 'Wait',true); %modified toolbox cpselect so outputs ALL cells, not just pairs
-    % imcontrast(gca)  %possible to incorperate imcontrast to adjust image contrast
-    r.basePoints = round(x.basePoints);
-    r.basePoints = round(x.basePoints);
-else
-    r.basePoints = varargin{1}
-    r.basePoints = r.basePoints
-end
-
-% generate mask from image
-r.CSmsk = generate_CS_mask(r);
-
-% now pull the signals out...
-r.CSsig = generate_CS_signal_map(r)
 
 %generate figure that labels cells
 

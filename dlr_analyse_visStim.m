@@ -41,27 +41,10 @@ elseif nargin == 9
 end
 
 if exist('f','var')
-    r.image(1) = load_image_with_visStim(f{1}, p{1});
+    [r.image(1), r.basePoints] = load_image_with_visStim(f{1}, p{1});
 else
-    r.image(1) = load_image_with_visStim;
+    [r.image(1), r.basePoints] = load_image_with_visStim;
 end
-
-if exist('basePoints','var')
-    r.basePoints = basePoints;
-    r.image(1).basePoints = r.basePoints;
-else
-    %select cells for analysis across trials
-    [~, ~,x] = cpselect_sk(r.image(1).fuse,r.image(1).CSma, 'Wait',true); %modified toolbox cpselect so outputs ALL cells, not just pairs
-    % imcontrast(gca)  %possible to incorperate imcontrast to adjust image contrast
-    r.image(1).basePoints = round(x.basePoints);
-    r.basePoints = round(x.basePoints);
-end
-
-% generate mask from image
-r.image(1).CSmsk = generate_CS_mask(r.image(1));
-
-% now pull the signals out...
-r.image(1).CSsig = generate_CS_signal_map(r.image(1));
 
 %generate figure that labels cells
 
@@ -90,17 +73,11 @@ end % if genFigures
 
 for i=2:numTrials
     if exist('f','var')
-        new_image = load_image_with_visStim(f{i},p{i});
+        [new_image, ~] = load_image_with_visStim(f{i},p{i}, r.basePoints);
     else
-        new_image = load_image_with_visStim;
+        [new_image, ~] = load_image_with_visStim(r.basePoints);
     end
-    new_image.basePoints = r.image(1).basePoints;
-    % generate mask from image
-    new_image.CSmsk = generate_CS_mask(new_image);
-
-    % now pull the signals out...
-    new_image.CSsig = generate_CS_signal_map(new_image);
-
+    
     [new_image.stimOnsets, ...
     new_image.stimOffsets, ...
     new_image.baseline, ...
