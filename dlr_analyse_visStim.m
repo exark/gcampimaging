@@ -41,7 +41,12 @@ elseif nargin == 9
 end
 
 if exist('f','var')
-    [r.image(1), r.basePoints] = load_image_with_visStim(f{1}, p{1});
+    if exist('basePoints','var')
+        [r.image(1), ~] = load_image_with_visStim(f{1}, p{1}, basePoints);
+        r.basePoints = basePoints;
+    else
+        [r.image(1), r.basePoints] = load_image_with_visStim(f{1}, p{1});
+    end
 else
     [r.image(1), r.basePoints] = load_image_with_visStim;
 end
