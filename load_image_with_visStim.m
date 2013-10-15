@@ -10,6 +10,7 @@ if nargin < 2
 else
     f = varargin{1};
     p = varargin{2};
+end
 
 %select .mat vis stim file with suggestion:
 DirInfoImage=dir(f);
