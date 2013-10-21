@@ -14,28 +14,45 @@ fclose(fid);
 the_title = header{1}{1};
 
 figure()
-% title(the_title, 'FontWeight','bold')
-subplot(2,6,1)
+suptitle(the_title(1:end-1), 'FontWeight','bold')
+subplot(4,5,1)
 generate_labeled_figure(r100.image(1))
-subplot(2,6,7)
+title('100% Contrast')
+subplot(4,5,[11 16])
+title('100% Contrast')
+ylabel('$\frac{F}{F_0}$','Interpreter', 'Latex','FontSize', 24)
+xlabel('Bar Orientation ($^\circ$)','Interpreter', 'Latex','FontSize', 24)
 generate_ordered_fluorescence_w_mean(r100)
-subplot(2,6,2)
+
+subplot(4,5,6)
 generate_labeled_figure(r50.image(1))
-subplot(2,6,8)
+title('50% Contrast')
+subplot(4,5,[12 17])
 generate_ordered_fluorescence_w_mean(r50)
-subplot(2,6,3)
+title('50% Contrast')
+
+subplot(4,5,2)
 generate_labeled_figure(r25.image(1))
-subplot(2,6,9)
+title('25% Contrast')
+subplot(4,5,[13 18])
 generate_ordered_fluorescence_w_mean(r25)
-subplot(2,6,4)
+title('25% Contrast')
+
+subplot(4,5,7)
 generate_labeled_figure(r12.image(1))
-subplot(2,6,10)
+title('12.5% Contrast')
+subplot(4,5,[14 19])
 generate_ordered_fluorescence_w_mean(r12)
-subplot(2,6,5)
+title('12.5% Contrast')
+
+subplot(4,5,3)
 generate_labeled_figure(r6.image(1))
-subplot(2,6,11)
+title('6.25% Contrast')
+subplot(4,5,[15 20])
 generate_ordered_fluorescence_w_mean(r6)
-subplot(2,6,12)
+title('6.25% Contrast')
+
+subplot(4,5,[4,5,9,10])
 for i=[r100, r50, r25, r12, r6]
     responseOrdered(:,1) = i.meanResponses(:,12);
     responseOrdered(:,2:13) = i.meanResponses(:,1:12);
