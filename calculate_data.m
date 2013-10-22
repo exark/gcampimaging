@@ -44,7 +44,7 @@ stimOffsets= frameTransitions1(2:2:numel(frameTransitions1));
 stimOffsets(end+1)= stimOnsets(end)+5;
 
 % % defining baseline for each individual cell here:
-baseline = zeros(size(image.CSsig,1))
+baseline = zeros(size(image.CSsig,1));
 for i= 1: size(image.CSsig,1)
     baseline(i)= (mean([image.CSsig(i,stimOnsets) image.CSsig(i,stimOnsets-1) image.CSsig(i,stimOnsets-2)]));
 end

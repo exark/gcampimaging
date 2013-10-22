@@ -51,8 +51,6 @@ else
     [r.image(1), r.basePoints] = load_image_with_visStim;
 end
 
-%generate figure that labels cells
-
 [r.image(1).stimOnsets, ...
 r.image(1).stimOffsets, ...
 r.image(1).baseline, ...
@@ -66,7 +64,6 @@ r.image(1).responseOrdered_localBaseline, ...
 r.image(1).responseOrdered_Traces] = calculate_data(r.image(1));
 
 % %plot raw fluorescence traces for each cell:
-
 if genFigures
     generate_labeled_figure(r.image(1));
     generate_onsets_figure(r.image(1));
@@ -74,8 +71,7 @@ if genFigures
     generate_ordered_fluorescence_figure(r.image(1))
 end % if genFigures
 
-% multiple trail analysis starts here
-
+% multiple trial analysis starts here
 for i=2:numTrials
     if exist('f','var')
         [new_image, ~] = load_image_with_visStim(f{i},p{i}, r.basePoints);
@@ -109,12 +105,22 @@ for i=2:numTrials
     end % if genFigures
 end
 
-% generate mean response from all trials
-concatted_ordered_responses = cat(1,r.image(1).responseOrdered_MeanAmplitude, ...
-    r.image(2).responseOrdered_MeanAmplitude, ...
-    r.image(3).responseOrdered_MeanAmplitude, ...
-    r.image(4).responseOrdered_MeanAmplitude);
-r.meanResponses = mean(concatted_ordered_responses);
+% generate mean response from all trials, for all cells
+numCells = size(r.image(1).CSsig,1);
+r.meanResponses = zeros(numCells,12);
+r.baselines = zeros(numCells,12,numTrials);
+r.baselineStdev = zeros(numCells,1);
+for i=1:numCells
+    concatted_ordered_responses = cat(1,r.image(1).responseOrdered_MeanAmplitude(i,:), ...
+        r.image(2).responseOrdered_MeanAmplitude(i,:), ...
+        r.image(3).responseOrdered_MeanAmplitude(i,:), ...
+        r.image(4).responseOrdered_MeanAmplitude(i,:));
+    r.meanResponses(i,:) = mean(concatted_ordered_responses);
+    for j=1:numTrials
+        r.baselines(i,:,j) = r.image(j).responseOrdered_localBaseline(i,:);
+    end
+    r.baselineStdev(i) = std(reshape(r.baselines(i,:,:),1,12*numTrials));
+end
 
 % mkdir('Analysis');
 % cd ('Analysis');
