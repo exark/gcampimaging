@@ -11,7 +11,7 @@ end
 
 responseOrdered(:,1)= results_object.meanResponses(cellID,12);
 responseOrdered(:,2:13)= results_object.meanResponses(cellID,1:12);
-plot(1:13,responseOrdered(:,1:13),'-k','LineWidth',1.2);
+plot(1:13,responseOrdered(:,1:13),'LineWidth',1.2);
 plot(0:14,ones(1,15) * baselineStdev(cellID) + 1, '--k');
 plot(0:14,ones(1,15) * baselineStdev(cellID) * 2 + 1, '--k');
 plot(0:14,ones(1,15) * baselineStdev(cellID) * 3 + 1, '--k');
