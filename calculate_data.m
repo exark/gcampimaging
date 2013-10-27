@@ -50,7 +50,7 @@ for i= 1: size(image.CSsig,1)
 end
 
 % % get vis stim parameters(general, same for all cells):
-visStimParamFile=load ([image.mp image.mf]);
+visStimParamFile=load ([image.mp image.mf],'-mat');
 vsParamFilename= image.mf;
 [stimOrder, stimulusParameters, ~]= loadAndDecodeVisStimMatFile (image.mp, image.mf);
 

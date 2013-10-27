@@ -4,7 +4,7 @@
 function [stimOrder, stimulusParameters, numPresWithin1Run]= loadAndDecodeVisStimMatFile (mp, mf)
 
 %[f,p,i] = uigetfile('.mat','Pick a .mat vis stim parameter file.');
-stimulusParameters = load ([mp mf]);
+stimulusParameters = load ([mp mf],'-mat');
 %fprintf('Loaded selected vis stim parameter file: %s.\n', f);
 
 %stimulusParameters.nExperimentRepeats
