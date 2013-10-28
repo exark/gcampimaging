@@ -12,12 +12,18 @@ fid = fopen([p f]);
 header = textscan(fid, '%s', 1);
 fclose(fid);
 the_title = header{1}{1}(1:end-1);
-location=f(1:end-3);
+location=f(1:end-4);
+pv='';
+%pv='PV_';
 
 stims=[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 
 mkdir('Analysis');
 cd ('Analysis');
+
+labeled_fig = figure();
+generate_labeled_figure(r100.image(1));
+saveas(labeled_fig, [pv location '_labeled_figure.fig'],'fig');
 
 for k=1:size(r100.meanResponses,1)
     fig = figure('units','normalized','outerposition',[0 0 1 1]);
@@ -85,10 +91,9 @@ for k=1:size(r100.meanResponses,1)
         hold all
     end
     hold off
-    mtit([the_title ': Cell ' num2str(k)])
     tightfig
-%     uncomment when you wanna save pngs
-%     saveas(fig, [location '_cell' k '.png'], 'png');
+    mtit([the_title ': Cell ' num2str(k)])
+    saveas(fig, [pv location '_cell' num2str(k) '.fig'], 'fig');
 end
 sf = [the_title '_' location];
 [sf,sp]= uiputfile('.mat', ['Save responses for image file: ' the_title], sf);

@@ -5,7 +5,7 @@
 %necessary.
 function [r] = pxp_analysis
 thresh=0.1;
-sensitivity=2;
+sensitivity=1.5;
 multMagnitude=10;
 
 originaldirectory=pwd;
@@ -152,7 +152,7 @@ for i=1:size(r.CSsig,1)
     else
         orientation_color=[173 102 213];
     end
-    r.pxp_map(r.x(i),r.y(i),:) = orientation_color;
+    r.pxp_map(r.y(i),r.x(i),:) = orientation_color;
 end
 
 figure()
