@@ -1,4 +1,4 @@
-function [r100,r50,r25,r12,r6] = plot_multiple_contrasts
+function [r100,r50,r25,r12,r6] = plot_multiple_contrasts(pv)
 
 [f, p] = uigetfile('.txt', 'Select the file describing the runs you want to analyze');
 
@@ -13,8 +13,6 @@ header = textscan(fid, '%s', 1);
 fclose(fid);
 the_title = header{1}{1}(1:end-1);
 location=f(1:end-4);
-pv='';
-%pv='PV_';
 
 stims=[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 
