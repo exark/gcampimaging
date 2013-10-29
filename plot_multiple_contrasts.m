@@ -32,7 +32,8 @@ for k=1:size(r100.meanResponses,1)
     generate_labeled_figure(r100.image(1),k)
     title('100% Contrast')
     subplot(4,5,[11 16])
-    osi=calc_osiSK(r100.meanResponses(k,:),stims);
+    subbedResponses=adjustValues(r100.meanResponses(k,:));
+    osi=calc_osiSK(subbedResponses,stims);
     title(['100% Contrast, 1-CV=' num2str(osi)])
     ylabel('$\frac{F}{F_0}$','Interpreter', 'Latex','FontSize', 12)
     xlabel('Bar Orientation ($^\circ$)','Interpreter', 'Latex','FontSize', 12)
@@ -44,7 +45,8 @@ for k=1:size(r100.meanResponses,1)
     title('50% Contrast')
     subplot(4,5,[12 17])
     generate_ordered_fluorescence_w_mean(r50,k,r50.baselineStdev)
-    osi=calc_osiSK(r50.meanResponses(k,:),stims);
+    subbedResponses=adjustValues(r50.meanResponses(k,:));
+    osi=calc_osiSK(subbedResponses,stims);
     title(['50% Contrast, 1-CV=' num2str(osi)])
     
     subplot(4,5,2)
@@ -53,7 +55,8 @@ for k=1:size(r100.meanResponses,1)
     title('25% Contrast')
     subplot(4,5,[13 18])
     generate_ordered_fluorescence_w_mean(r25,k,r25.baselineStdev)
-    osi=calc_osiSK(r25.meanResponses(k,:),stims);
+    subbedResponses=adjustValues(r25.meanResponses(k,:));
+    osi=calc_osiSK(subbedResponses,stims);
     title(['25% Contrast, 1-CV=' num2str(osi)])
 
     subplot(4,5,7)
@@ -62,7 +65,8 @@ for k=1:size(r100.meanResponses,1)
     title('12.5% Contrast')
     subplot(4,5,[14 19])
     generate_ordered_fluorescence_w_mean(r12,k,r12.baselineStdev)
-    osi=calc_osiSK(r12.meanResponses(k,:),stims);
+    subbedResponses=adjustValues(r12.meanResponses(k,:));
+    osi=calc_osiSK(subbedResponses,stims);
     title(['12.5% Contrast, 1-CV=' num2str(osi)])
 
     subplot(4,5,3)
@@ -71,7 +75,8 @@ for k=1:size(r100.meanResponses,1)
     title('6.25% Contrast')
     subplot(4,5,[15 20])
     generate_ordered_fluorescence_w_mean(r6,k,r6.baselineStdev)
-    osi=calc_osiSK(r6.meanResponses(k,:),stims);
+    subbedResponses=adjustValues(r6.meanResponses(k,:));
+    osi=calc_osiSK(subbedResponses,stims);
     title(['6.25% Contrast, 1-CV=' num2str(osi)])
     
     subplot(4,5,[4,5,9,10])
@@ -79,13 +84,7 @@ for k=1:size(r100.meanResponses,1)
     for i=[r100, r50, r25, r12, r6]
         responseOrdered(:,1) = i.meanResponses(k,12);
         responseOrdered(:,2:13) = i.meanResponses(k,1:12);
-        for j=1:length(responseOrdered)
-            responseOrdered(j) = responseOrdered(j)-1;
-        end
-        adjustment = min(responseOrdered);
-        for j=1:length(responseOrdered)
-            responseOrdered(j) = responseOrdered(j)+adjustment;
-        end
+        responseOrdered = adjustValues(responseOrdered);
         theta = 0:(2*pi)/12:2*pi;
         polar(theta, responseOrdered);
         hold all
@@ -99,4 +98,18 @@ sf = [the_title '_' location];
 [sf,sp]= uiputfile('.mat', ['Save responses for image file: ' the_title], sf);
 save(sf,'r100','r50','r25','r12','r6');
 cd('..');
+
+end
+
+function subbedResponses = adjustValues(input_values)
+
+subbedResponses=zeros(1,12);
+for i=1:length(input_values)
+   subbedResponses(i) = input_values(i) - 1;
+end
+adjustment = abs(min(subbedResponses));
+for i=1:length(subbedResponses)
+    subbedResponses(i) = subbedResponses(i) + adjustment;
+end
+end
 
