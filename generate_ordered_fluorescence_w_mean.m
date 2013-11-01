@@ -1,7 +1,7 @@
-function generate_ordered_fluorescence_w_mean(results_object, cellID, baselineStdev)
+function generate_ordered_fluorescence_w_mean(results_object, cellID)
 
 %figure();
-hold all
+hold on
 
 for i=1:4
 responseOrdered(:,1)= results_object.image(i).responseOrdered_MeanAmplitude(cellID,12);
@@ -12,9 +12,9 @@ end
 responseOrdered(:,1)= results_object.meanResponses(cellID,12);
 responseOrdered(:,2:13)= results_object.meanResponses(cellID,1:12);
 plot(1:13,responseOrdered(:,1:13),'LineWidth',1.2);
-plot(0:14,ones(1,15) * baselineStdev(cellID) + 1, '--k');
-plot(0:14,ones(1,15) * baselineStdev(cellID) * 2 + 1, '--k');
-plot(0:14,ones(1,15) * baselineStdev(cellID) * 3 + 1, '--k');
+plot(0:14,ones(1,15) * results_object.baselineStdev(cellID) + 1, '--k');
+plot(0:14,ones(1,15) * results_object.baselineStdev(cellID) * 2 + 1, '--k');
+plot(0:14,ones(1,15) * results_object.baselineStdev(cellID) * 3 + 1, '--k');
 
 
 set(gca,'XTick', 1:13);
