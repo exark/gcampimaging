@@ -5,7 +5,7 @@
 %necessary.
 function [r] = pxp_analysis
 thresh=0.1;
-sensitivity=1.5;
+sensitivity=1.0;
 multMagnitude=10;
 
 originaldirectory=pwd;
@@ -26,7 +26,7 @@ ballTRACKch=4;
 
 %select .mat vis stim file with suggestion:
 DirInfoImage=dir(f);
-DirInfoVSF=dir('*.ana');
+DirInfoVSF=dir('*.mat');
 
 for i=1:size(DirInfoVSF,1)
     ad(i)=abs(diff([DirInfoImage.datenum DirInfoVSF(i).datenum]));

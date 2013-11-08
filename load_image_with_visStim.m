@@ -25,7 +25,7 @@ end
 
 %select .mat vis stim file with suggestion:
 DirInfoImage=dir(f);
-DirInfoVSF=dir('*.ana');
+DirInfoVSF=dir('*.mat');
 
 for i=1:size(DirInfoVSF,1)
     ad(i)=abs(diff([DirInfoImage.datenum DirInfoVSF(i).datenum]));
